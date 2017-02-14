@@ -5,6 +5,7 @@ import {Component} from '@angular/core';
     template: `
         <demo-issue-5345></demo-issue-5345>
         <demo-issue-9897></demo-issue-9897>
+        <demo-issue-135> </demo-issue-135>
     `
 })
 export class DemosGithubIssues { }
@@ -16,12 +17,15 @@ import {FlexLayoutModule}    from "../../../lib";     // `gulp build:components`
 
 import { DemoIssue5345 }     from "./issue.5345.demo";
 import { DemoIssue9897 }     from "./issue.9897.demo";
+import {DemoIssue135}        from "./issue.135.demo";
 
 @NgModule({
   declarations : [
     DemosGithubIssues,      // used by the Router with the root app component
     DemoIssue5345,
-    DemoIssue9897
+    DemoIssue9897,
+    DemoIssue135
+
   ],
   imports : [
     CommonModule,
