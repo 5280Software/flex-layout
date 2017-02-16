@@ -5,12 +5,12 @@
  * Use of this source code is governed by an MIT-style license that can be
  * found in the LICENSE file at https://angular.io/license
  */
-import 'rxjs/add/operator/filter';
-import 'rxjs/add/operator/map';
-
 import {ModuleWithProviders, NgModule} from '@angular/core';
+import '../utils/rxjs-operators';
+
 import {MediaMonitor} from '../media-query/media-monitor';
 import {MediaQueriesModule} from '../media-query/_module';
+import {ShowHideConnectorProvider} from './utils/show-hide-connector';
 
 import {FlexDirective} from './api/flex';
 import {LayoutDirective} from './api/layout';
@@ -57,7 +57,10 @@ const ALL_DIRECTIVES = [
   declarations: ALL_DIRECTIVES,
   imports: [MediaQueriesModule],
   exports: [MediaQueriesModule, ...ALL_DIRECTIVES],
-  providers: [MediaMonitor]
+  providers: [
+    MediaMonitor,
+    ShowHideConnectorProvider
+  ]
 })
 export class FlexLayoutModule {
   /** @deprecated */

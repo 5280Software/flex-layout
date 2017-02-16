@@ -20,10 +20,14 @@ import {MediaQuerySubscriber} from '../../media-query/media-change';
  * Definition of a css style. Either a property name (e.g. "flex-basis") or an object
  * map of property name and value (e.g. {display: 'none', flex-order: 5}).
  */
-export type StyleDefinition = string|{ [property: string]: string|number };
+export type StyleDefinition = string|{[property: string]: string|number};
 
 /** Abstract base class for the Layout API styling directives. */
 export abstract class BaseFxDirective implements OnDestroy {
+
+  protected get nativeElement():any {
+    return this._elementRef ? this._elementRef.nativeElement : null;
+  }
   /**
    * Original dom Elements CSS display style
    */
@@ -171,7 +175,7 @@ export abstract class BaseFxDirective implements OnDestroy {
     var buffer = [];
 
     // iterate backwards ensuring that length is an UInt32
-    for ( var i = obj.length; i--; ) {
+    for (var i = obj.length; i--;) {
       buffer[i] = obj[i];
     }
     return buffer;
@@ -181,7 +185,7 @@ export abstract class BaseFxDirective implements OnDestroy {
    * Fast validator for presence of attribute on the host element
    */
   protected hasKeyValue(key) {
-    return this._mqActivation.hasKeyValue(key);
+    return this._mqActivation && this._mqActivation.hasKeyValue(key);
   }
 
 }

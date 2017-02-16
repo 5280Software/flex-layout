@@ -3,8 +3,9 @@ import {Component} from '@angular/core';
 @Component({
     selector: 'demos-github-issues',
     template: `
-        <demo-issue-5345></demo-issue-5345>
-        <demo-issue-9897></demo-issue-9897>
+        <demo-issue-181></demo-issue-181>
+        <!--<demo-issue-5345></demo-issue-5345>-->
+        <!--<demo-issue-9897></demo-issue-9897>-->
     `
 })
 export class DemosGithubIssues { }
@@ -16,12 +17,14 @@ import {FlexLayoutModule}    from "../../../lib";     // `gulp build:components`
 
 import { DemoIssue5345 }     from "./issue.5345.demo";
 import { DemoIssue9897 }     from "./issue.9897.demo";
+import {DemoIssue181}        from './issue.181.demo';
 
 @NgModule({
   declarations : [
     DemosGithubIssues,      // used by the Router with the root app component
     DemoIssue5345,
     DemoIssue9897
+    DemoIssue181
   ],
   imports : [
     CommonModule,

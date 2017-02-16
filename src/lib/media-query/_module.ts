@@ -6,6 +6,7 @@
  * found in the LICENSE file at https://angular.io/license
  */
 import {NgModule} from '@angular/core';
+import '../utils/rxjs-operators';
 
 import {MatchMedia} from './match-media';
 import {MediaMonitor} from './media-monitor';

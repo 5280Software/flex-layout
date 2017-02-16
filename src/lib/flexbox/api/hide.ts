@@ -15,14 +15,18 @@ import {
   Renderer,
   SimpleChanges,
   Self,
-  Optional
+  Optional, Inject
 } from '@angular/core';
 
 import {Subscription} from 'rxjs/Subscription';
+import 'rxjs/add/operator/filter';
 
 import {BaseFxDirective} from './base';
 import {MediaChange} from '../../media-query/media-change';
 import {MediaMonitor} from '../../media-query/media-monitor';
+
+import {EventBusService, EventBusFilter} from '../../utils/event-bus-service';
+import {ShowHideConnector, ConnectorEvents} from '../utils/show-hide-connector';
 
 import {LayoutDirective} from './layout';
 
@@ -51,6 +55,8 @@ export class HideDirective extends BaseFxDirective implements OnInit, OnChanges,
    * Stored so we can unsubscribe when this directive is destroyed.
    */
   protected _layoutWatcher: Subscription;
+
+  protected _connectorWatcher: Subscription;
 
   @Input('fxHide')       set hide(val) {
     this._cacheInput("hide", val);
@@ -96,9 +102,11 @@ export class HideDirective extends BaseFxDirective implements OnInit, OnChanges,
    *
    */
   constructor(monitor: MediaMonitor,
-              @Optional() @Self() protected _layout: LayoutDirective,
-              protected elRef: ElementRef,
-              protected renderer: Renderer) {
+              elRef: ElementRef,
+              renderer: Renderer,
+              @Inject(ShowHideConnector) protected _connector: EventBusService,
+              @Optional() @Self() protected _layout: LayoutDirective) {
+
     super(monitor, elRef, renderer);
 
     /**
@@ -109,6 +117,7 @@ export class HideDirective extends BaseFxDirective implements OnInit, OnChanges,
       this._layoutWatcher = _layout.layout$.subscribe(() => this._updateWithValue());
     }
     this._display = this._getDisplayStyle(); // re-invoke override to use `this._layout`
+
   }
 
 
@@ -137,7 +146,7 @@ export class HideDirective extends BaseFxDirective implements OnInit, OnChanges,
   }
 
   /**
-   * After the initial onChanges, build an mqActivation object that bridges
+   * After the initial onChanges, build a mqActivation object that bridges
    * mql change events to onMediaQueryChange handlers
    * NOTE: fxHide has special fallback defaults.
    *       - If the non-responsive fxHide="" is specified we default to hide==true
@@ -145,13 +154,12 @@ export class HideDirective extends BaseFxDirective implements OnInit, OnChanges,
    *       This logic supports mixed usages with fxShow; e.g. `<div fxHide fxShow.gt-sm>`
    */
   ngOnInit() {
-    // If the attribute 'fxHide' is specified we default to hide==true, otherwise do nothing..
-    let value = (this._queryInput('hide') == "") ? true : this._getDefaultVal("hide", false);
+    this._activateReponsive();
+    this._activateConnector();
 
-    this._listenForMediaQueryChanges('hide', value, (changes: MediaChange) => {
-      this._updateWithValue(changes.value);
-    });
-    this._updateWithValue();
+    if (!this._delegateToHide()) {
+      this._updateWithValue();
+    }
   }
 
 
@@ -160,11 +168,62 @@ export class HideDirective extends BaseFxDirective implements OnInit, OnChanges,
     if (this._layoutWatcher) {
       this._layoutWatcher.unsubscribe();
     }
+    if (this._connectorWatcher) {
+      this._connectorWatcher.unsubscribe();
+    }
   }
 
   // *********************************************
   // Protected methods
   // *********************************************
+
+  /**
+   *  Activate the Responsive features using MediaMonitor
+   *  and delegating via the ShowHideConnector if needed.
+   */
+  protected _activateReponsive() {
+    // If the attribute 'fxHide' is specified we default to hide==true, otherwise do nothing..
+    let value = (this._queryInput('hide') == "") ? true : this._getDefaultVal("hide", false);
+
+    /**
+     * Listen for responsive changes
+     */
+    this._listenForMediaQueryChanges('hide', value, (changes: MediaChange) => {
+      this._updateWithValue(changes.value);
+    });
+  }
+
+  /**
+   * Use special ShowHideConnector message-bus to listen
+   * for incoming updateWithHide messages and trigger
+   * `updateWithValue()`.
+   *
+   *  NOTE: ShowHideConnector supports messaging ONLY for
+   *  directives on the same element.
+   */
+  protected _activateConnector() {
+    let isSameElement: EventBusFilter = ((el: any) => (el === this.nativeElement));
+    this._connectorWatcher = this._connector
+        .observe(ConnectorEvents.announceHasShow)
+        .filter(isSameElement)
+        .subscribe(() => {
+          this._hasShow = true;
+          console.log('ConnectorEvents.announceHasShow');
+          this._connectorWatcher.unsubscribe();
+        });
+    // console.log('hide::  ' + this.nativeElement);
+    this._connector.emit(ConnectorEvents.announceHasHide, this.nativeElement);
+
+  }
+
+  /**
+   * If deactivating Show, then delegate action to the Hide directive if it is
+   * specified on same element.
+   */
+  protected _delegateToHide(changes?: MediaChange) {
+    let delegate = (!changes || !this.hasKeyValue('hide'));
+    return delegate && this._hasShow;
+  }
 
   /**
    * Validate the visibility value and then update the host's inline display style
@@ -193,6 +252,11 @@ export class HideDirective extends BaseFxDirective implements OnInit, OnChanges,
   protected _validateTruthy(value) {
     return FALSY.indexOf(value) === -1;
   }
+
+  /**
+   * Does this element also have fxShow directives?
+   */
+  private _hasShow = false;
 }
 
 
