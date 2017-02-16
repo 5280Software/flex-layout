@@ -74,12 +74,15 @@ export abstract class ObservableMedia implements Subscribable<MediaChange> {
  */
 @Injectable()
 export class MediaService implements ObservableMedia {
-  private observable$: Observable<MediaChange>;
+  /**
+   * Should we announce gt-<xxx> breakpoint activations ?
+   */
+  public filterOverlaps = true;
 
   constructor(private mediaWatcher: MatchMedia,
               private breakpoints: BreakPointRegistry) {
-    this._registerBreakPoints();
     this.observable$ = this._buildObservable();
+    this._registerBreakPoints();
   }
 
   /**
@@ -137,7 +140,11 @@ export class MediaService implements ObservableMedia {
         .map((change: MediaChange) => {
           // Inject associated (if any) alias information into the MediaChange event
           return mergeAlias(change, this._findByQuery(change.mediaQuery));
-        });
+        })
+        .filter((change:MediaChange) => {
+          let bp = this.breakpoints.findByQuery(change.mediaQuery);
+          return !bp ? true : !(this.filterOverlaps && bp.overlapping);
+        })
   }
 
   /**
@@ -162,6 +169,7 @@ export class MediaService implements ObservableMedia {
     return bp ? bp.mediaQuery : query;
   };
 
+  private observable$: Observable<MediaChange>;
 }
 
 /**
